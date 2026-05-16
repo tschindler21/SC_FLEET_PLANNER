@@ -138,11 +138,19 @@ var NOISE=["self-land hangar","aeroview hangar","revel & york","vfg industrial",
 var fleet=[],melts=new Set(),credit=0,chains=[],priceUpdateMsg="";
 
 function getStorePrice(name){
-  if(SP[name])return SP[name];
-  if(ALIASES[name]){var sid=ALIASES[name];for(var i=0;i<SHIPS.length;i++){if(SHIPS[i].id===sid)return SHIPS[i].p;}}
+  var best=0;
+  if(SP[name])best=Math.max(best,SP[name]);
+  /* Check without manufacturer prefix */
+  var short=stripMfr(name);
+  for(var k in SP){if(SP.hasOwnProperty(k)){var kl=k.toLowerCase();if(kl===name.toLowerCase()||kl===short||stripMfr(k)===short)best=Math.max(best,SP[k]);}}
+  /* Check SHIPS array */
   var nl=name.toLowerCase();
-  for(var i=0;i<SHIPS.length;i++){if(SHIPS[i].n.toLowerCase()===nl)return SHIPS[i].p;}
-  return 0;
+  for(var i=0;i<SHIPS.length;i++){
+    var sn=SHIPS[i].n.toLowerCase();var snShort=stripMfr(SHIPS[i].n);
+    if(sn===nl||sn===short||snShort===nl||snShort===short)best=Math.max(best,SHIPS[i].p||0);
+  }
+  if(ALIASES[name]){var sid=ALIASES[name];for(var i=0;i<SHIPS.length;i++){if(SHIPS[i].id===sid)best=Math.max(best,SHIPS[i].p||0);}}
+  return best;
 }
 function splitCSV(line){var r=[],cur="",inQ=false;for(var k=0;k<line.length;k++){var ch=line[k];if(ch==='"'){if(inQ&&k+1<line.length&&line[k+1]==='"'){cur+='"';k++;}else{inQ=!inQ;}}else if(ch===','&&!inQ){r.push(cur.trim());cur="";}else{cur+=ch;}}r.push(cur.trim());return r;}
 
@@ -348,16 +356,32 @@ function fetchWikiPrices(){
 function updatePricesFromWiki(ships){
   var count=0;
   ships.forEach(function(s){
-    var existingPrice=SP[s.name]||0;
-    /* Only update if wiki price is higher or we had no price */
-    if(s.price>=existingPrice){SP[s.name]=s.price;}
+    /* Find best existing price across all name variants */
+    var nl=s.name.toLowerCase();
+    var bestExisting=0;
+    /* Check SP for raw name and mfr+name variants */
+    if(SP[s.name])bestExisting=Math.max(bestExisting,SP[s.name]);
+    var mfrName=s.mfr?(s.mfr+" "+s.name):"";
+    if(mfrName&&SP[mfrName])bestExisting=Math.max(bestExisting,SP[mfrName]);
+    /* Check SHIPS array for any match */
+    for(var i=0;i<SHIPS.length;i++){
+      var sn=SHIPS[i].n.toLowerCase();
+      var snShort=sn.split(" ").slice(1).join(" ");
+      if(sn===nl||snShort===nl||nl===snShort){
+        bestExisting=Math.max(bestExisting,SHIPS[i].p||0);
+      }
+    }
+    /* Only update if wiki price >= best existing */
+    var usePrice=s.price>=bestExisting?s.price:bestExisting;
+    SP[s.name]=usePrice;
+    if(mfrName)SP[mfrName]=usePrice;
     count++;
     var found=false;
     for(var i=0;i<SHIPS.length;i++){
-      var sn=SHIPS[i].n.toLowerCase(),nl=s.name.toLowerCase();
+      var sn=SHIPS[i].n.toLowerCase();
       var snShort=sn.split(" ").slice(1).join(" ");
-      if(sn===nl||snShort===nl){
-        if(s.price>=SHIPS[i].p||SHIPS[i].p===0){SHIPS[i].p=s.price;}
+      if(sn===nl||snShort===nl||nl===snShort){
+        if(usePrice>SHIPS[i].p||SHIPS[i].p===0){SHIPS[i].p=usePrice;}
         found=true;break;
       }
     }
