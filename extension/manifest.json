@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "SC Fleet Export",
+  "description": "Export your RSI hangar to CSV for SC Fleet Viewer",
+  "version": "4.0",
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "*://*.robertsspaceindustries.com/*",
+    "*://api.star-citizen.wiki/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.robertsspaceindustries.com/*/account/pledges*", "*://*.robertsspaceindustries.com/account/pledges*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "48": "icon48.png"
+  }
+}

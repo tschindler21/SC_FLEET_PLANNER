@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SC Fleet Planner</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#060a10;--bg2:rgba(8,12,20,0.85);--bg3:rgba(8,12,20,0.9);--bg4:rgba(8,12,20,0.5);
+  --text:#e8edf2;--text2:#99a;--text3:#778;--text4:#667;--text5:#556;
+  --border:rgba(255,255,255,0.05);--border2:rgba(255,255,255,0.06);--border3:rgba(255,255,255,0.1);--border4:rgba(255,255,255,0.12);
+  --gold:#c89564;--gold-bg:rgba(200,149,100,0.08);--gold-border:rgba(200,149,100,0.15);
+  --green:#69f0ae;--blue:#4fc3f7;--yellow:#ffd740;--red:#ff5252;
+  --input-bg:rgba(255,255,255,0.04);--input-border:rgba(255,255,255,0.1);
+  --card-hover:rgba(12,18,28,0.9);--grid-color:rgba(0,224,255,0.3);
+}
+.light{
+  --bg:#f5f0e8;--bg2:rgba(255,255,255,0.85);--bg3:rgba(255,255,255,0.95);--bg4:rgba(245,240,232,0.8);
+  --text:#1a1a2e;--text2:#555;--text3:#666;--text4:#777;--text5:#888;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.06);--border3:rgba(0,0,0,0.12);--border4:rgba(0,0,0,0.15);
+  --gold:#8b6914;--gold-bg:rgba(139,105,20,0.06);--gold-border:rgba(139,105,20,0.2);
+  --green:#0d6e3a;--blue:#1565c0;--yellow:#8a6600;--red:#c62828;
+  --input-bg:rgba(0,0,0,0.03);--input-border:rgba(0,0,0,0.12);
+  --card-hover:rgba(0,0,0,0.03);--grid-color:rgba(139,105,20,0.15);
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;font-size:14px;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:0.03;background-image:linear-gradient(var(--grid-color) 1px,transparent 1px),linear-gradient(90deg,var(--grid-color) 1px,transparent 1px);background-size:60px 60px;}
+.wrap{max-width:680px;margin:0 auto;padding:24px 16px;position:relative;}
+h1{font-size:28px;font-weight:700;letter-spacing:4px;color:var(--text);text-align:center;margin-bottom:2px;}
+.sub{font-size:10px;letter-spacing:4px;color:var(--gold);text-align:center;opacity:0.5;margin-bottom:28px;}
+.landing{max-width:560px;margin:0 auto;}
+#dropzone{border:2px dashed var(--gold-border);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.3s;margin-bottom:28px;}
+#dropzone:hover{border-color:var(--gold);background:rgba(200,149,100,0.04);}
+#dropzone h2{font-size:20px;color:var(--gold);margin-bottom:8px;font-weight:600;}
+#dropzone p{font-size:12px;color:var(--text4);}
+.steps{margin-bottom:24px;}
+.step{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:8px;padding:16px 18px;margin-bottom:10px;}
+.step-num{font-size:28px;font-weight:700;color:rgba(200,149,100,0.2);float:right;line-height:1;}
+.step h3{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px;}
+.step p{font-size:14px;color:#99a;line-height:1.8;}
+.step code{background:rgba(255,255,255,0.08);padding:2px 7px;border-radius:3px;font-size:13px;color:#5fd4ff;}
+.step a{color:var(--blue);text-decoration:none;}
+.browser-note{font-size:14px;color:#99a;background:rgba(79,195,247,0.04);border:1px solid rgba(79,195,247,0.1);border-radius:6px;padding:14px 18px;line-height:1.8;margin-bottom:16px;}
+#status{color:var(--green);font-size:14px;padding:10px 0;}
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.dc{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:18px;text-align:center;}
+.dc.w{grid-column:span 2;}
+.db{height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;}
+.df{height:100%;border-radius:3px;transition:width 0.4s;}
+.shd{font-size:13px;font-weight:700;color:var(--gold);letter-spacing:2px;border-bottom:1px solid rgba(200,149,100,0.12);padding:8px 0 6px;margin:20px 0 8px;display:flex;justify-content:space-between;align-items:center;}
+.cd{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:6px;display:flex;align-items:center;gap:10px;transition:all 0.2s;}
+.cd:hover{border-color:rgba(255,255,255,0.1);background:rgba(12,18,28,0.9);}
+select{background:var(--bg2);border:1px solid var(--border4);border-radius:6px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;flex:1;max-width:240px;}
+select option{background:var(--bg2);color:var(--text);}
+select optgroup{color:var(--gold);font-style:normal;}
+input[type=number]{background:var(--input-bg);border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;width:80px;}
+input[type=number]:focus,select:focus{border-color:rgba(200,149,100,0.4);}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--red);cursor:pointer;}
+.btn{display:inline-block;padding:8px 18px;font-size:11px;letter-spacing:1px;border:1px solid rgba(200,149,100,0.3);border-radius:6px;background:rgba(200,149,100,0.08);color:var(--gold);cursor:pointer;transition:all 0.2s;}
+.btn:hover{background:rgba(200,149,100,0.15);border-color:var(--gold);}
+.footer{text-align:center;margin-top:32px;font-size:11px;line-height:2;color:var(--text5);}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>SC FLEET PLANNER</h1>
+<div class="sub">IMPORT HANGAR &#x2022; PLAN CCU CHAINS &#x2022; EXPORT FOR ORG</div>
+<div style="text-align:center;margin-bottom:16px;"><span id="theme-toggle" style="padding:6px 16px;font-size:11px;letter-spacing:1px;border:1px solid var(--gold-border);border-radius:4px;color:var(--gold);cursor:pointer;background:var(--gold-bg);">&#x263C; LIGHT MODE</span></div>
+
+<div id="landing" class="landing">
+<div id="dropzone"><h2>Drop hangar_export.csv here</h2><p>or click to browse — also accepts saved .json plans</p></div>
+<input type="file" id="fileinput" accept=".csv,.json" style="display:none">
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <h3>Install the Browser Extension</h3>
+    <p>Download and unzip <code>fleet-export-extension.zip</code>.</p>
+    <p style="margin-top:8px;"><strong style="color:var(--text);">Chrome / Edge / Brave / Opera:</strong><br>
+    Open <code>chrome://extensions</code> (or <code>edge://extensions</code>, <code>opera://extensions</code>).<br>
+    Enable <strong style="color:var(--text);">Developer mode</strong> (toggle in the top right corner).<br>
+    Click <strong style="color:var(--text);">Load unpacked</strong> and select the unzipped folder.</p>
+    <p style="margin-top:8px;"><strong style="color:var(--text);">Firefox:</strong><br>
+    Open <code>about:debugging#/runtime/this-firefox</code>.<br>
+    Click <strong style="color:var(--text);">Load Temporary Add-on</strong>.<br>
+    Select the <code>manifest.json</code> file from the unzipped folder.</p>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <h3>Export Your Hangar</h3>
+    <p>Go to <a href="https://robertsspaceindustries.com/account/pledges" target="_blank">robertsspaceindustries.com/account/pledges</a> and log in.<br>
+    An export bar appears at the bottom of the page.<br>
+    Click <strong style="color:var(--text);">Start Export</strong> &#x2014; it automatically pages through your entire hangar and downloads <code>hangar_export.csv</code>.</p>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <h3>Import Into the Planner</h3>
+    <p>Drag <code>hangar_export.csv</code> onto the drop zone above, or click to browse.<br>
+    Ships, CCUs, paints, and gear are parsed automatically with melt values and current store prices.<br>
+    You can also import a previously saved <code>.json</code> plan to continue where you left off.</p>
+  </div>
+</div>
+
+<div class="browser-note">
+  <strong style="color:var(--blue);">Privacy:</strong> Everything runs in your browser. No data is uploaded anywhere. The org export contains only ship names &#x2014; no melt values, no account info.
+</div>
+<div class="browser-note" style="border-color:rgba(255,215,64,0.15);background:rgba(255,215,64,0.03);">
+  <strong style="color:var(--yellow);">Note on prices:</strong> Store prices are fetched from the <a href="https://star-citizen.wiki" target="_blank" style="color:var(--yellow);">Star Citizen Wiki</a> during export. Newly released ships may take a day or two before the wiki adds their price. If you need updated prices later, just re-export from RSI and re-import here &#x2014; your CCU chains will be preserved.
+</div>
+</div>
+
+<div id="status"></div>
+<div id="app"></div>
+<div class="footer">ALL DATA STAYS IN YOUR BROWSER &#x2014; NOT AFFILIATED WITH CIG<br><a href="https://buymeacoffee.com/schindi21" target="_blank" style="color:var(--text3);text-decoration:none;border-bottom:1px solid #556;">buy me a coffee</a> &#x2022; BTC: <span style="color:var(--text3);font-size:9px;letter-spacing:0;">bc1qdyh5g2zska7s9e4vu27hzqyyre60t6khl4srnx</span></div>
+</div>
+<div id="DATA" style="display:none">{"ships": [{"id": "avenger_stalker", "n": "Aegis Avenger Stalker", "m": "Aegis", "p": 60}, {"id": "avenger_titan", "n": "Aegis Avenger Titan", "m": "Aegis", "p": 60}, {"id": "avenger_warlock", "n": "Aegis Avenger Warlock", "m": "Aegis", "p": 85}, {"id": "eclipse", "n": "Aegis Eclipse", "m": "Aegis", "p": 300}, {"id": "gladius", "n": "Aegis Gladius", "m": "Aegis", "p": 90}, {"id": "gladius_valiant", "n": "Aegis Gladius Valiant", "m": "Aegis", "p": 110}, {"id": "hammerhead", "n": "Aegis Hammerhead", "m": "Aegis", "p": 725}, {"id": "idris_p", "n": "Aegis Idris-P", "m": "Aegis", "p": 1500}, {"id": "javelin", "n": "Aegis Javelin", "m": "Aegis", "p": 3000}, {"id": "nautilus", "n": "Aegis Nautilus", "m": "Aegis", "p": 725}, {"id": "reclaimer", "n": "Aegis Reclaimer", "m": "Aegis", "p": 400}, {"id": "redeemer", "n": "Aegis Redeemer", "m": "Aegis", "p": 325}, {"id": "retaliator", "n": "Aegis Retaliator", "m": "Aegis", "p": 275}, {"id": "retaliator_bomber", "n": "Aegis Retaliator Bomber", "m": "Aegis", "p": 275}, {"id": "sabre", "n": "Aegis Sabre", "m": "Aegis", "p": 170}, {"id": "sabre_raven", "n": "Aegis Sabre Raven", "m": "Aegis", "p": 0}, {"id": "tiburon", "n": "Aegis Tiburon", "m": "Aegis", "p": 0}, {"id": "vanguard_harbinger", "n": "Aegis Vanguard Harbinger", "m": "Aegis", "p": 290}, {"id": "vanguard_hoplite", "n": "Aegis Vanguard Hoplite", "m": "Aegis", "p": 235}, {"id": "vanguard_sentinel", "n": "Aegis Vanguard Sentinel", "m": "Aegis", "p": 275}, {"id": "vanguard_warden", "n": "Aegis Vanguard Warden", "m": "Aegis", "p": 260}, {"id": "vulcan", "n": "Aegis Vulcan", "m": "Aegis", "p": 200}, {"id": "arrow", "n": "Anvil Arrow", "m": "Anvil", "p": 75}, {"id": "c8r_pisces", "n": "Anvil C8R Pisces", "m": "Anvil", "p": 65}, {"id": "c8x_pisces", "n": "Anvil C8X Pisces", "m": "Anvil", "p": 45}, {"id": "carrack", "n": "Anvil Carrack", "m": "Anvil", "p": 600}, {"id": "carrack_expedition", "n": "Anvil Carrack Expedition", "m": "Anvil", "p": 625}, {"id": "crucible", "n": "Anvil Crucible", "m": "Anvil", "p": 350}, {"id": "f7a_mk1", "n": "Anvil F7A Hornet MkI", "m": "Anvil", "p": 180}, {"id": "f7a_mk2", "n": "Anvil F7A Hornet MkII", "m": "Anvil", "p": 195}, {"id": "f7c_hornet", "n": "Anvil F7C Hornet", "m": "Anvil", "p": 110}, {"id": "f7c_mk2", "n": "Anvil F7C Hornet MkII", "m": "Anvil", "p": 175}, {"id": "f7c_m_super_hornet", "n": "Anvil F7C-M Super Hornet", "m": "Anvil", "p": 180}, {"id": "f7c_r_hornet_tracker", "n": "Anvil F7C-R Hornet Tracker", "m": "Anvil", "p": 140}, {"id": "f7c_s_hornet_ghost", "n": "Anvil F7C-S Hornet Ghost", "m": "Anvil", "p": 125}, {"id": "f8c", "n": "Anvil F8C Lightning", "m": "Anvil", "p": 0}, {"id": "gladiator", "n": "Anvil Gladiator", "m": "Anvil", "p": 165}, {"id": "hurricane", "n": "Anvil Hurricane", "m": "Anvil", "p": 195}, {"id": "liberator", "n": "Anvil Liberator", "m": "Anvil", "p": 400}, {"id": "paladin", "n": "Anvil Paladin", "m": "Anvil", "p": 350}, {"id": "pisces", "n": "Anvil Pisces", "m": "Anvil", "p": 40}, {"id": "terrapin", "n": "Anvil Terrapin", "m": "Anvil", "p": 220}, {"id": "valkyrie", "n": "Anvil Valkyrie", "m": "Anvil", "p": 375}, {"id": "nox", "n": "Aopoa Nox", "m": "Aopoa", "p": 40}, {"id": "santokyai", "n": "Aopoa San'tok.yai", "m": "Aopoa", "p": 220}, {"id": "raft", "n": "Argo RAFT", "m": "Argo", "p": 85}, {"id": "srv", "n": "Argo SRV", "m": "Argo", "p": 150}, {"id": "defender", "n": "Banu Defender", "m": "Banu", "p": 220}, {"id": "merchantman", "n": "Banu Merchantman", "m": "Banu", "p": 550}, {"id": "mustang_alpha", "n": "CNOU Mustang Alpha", "m": "Consolidated Outland", "p": 30}, {"id": "nomad", "n": "CNOU Nomad", "m": "Consolidated Outland", "p": 60}, {"id": "pioneer", "n": "Consolidated Outland Pioneer", "m": "Consolidated Outland", "p": 1000}, {"id": "a1_spirit", "n": "Crusader A1 Spirit", "m": "Crusader", "p": 150}, {"id": "a2_hercules", "n": "Crusader A2 Hercules", "m": "Crusader", "p": 750}, {"id": "ares_inferno", "n": "Crusader Ares Inferno", "m": "Crusader", "p": 250}, {"id": "ares_ion", "n": "Crusader Ares Ion", "m": "Crusader", "p": 250}, {"id": "c1_spirit", "n": "Crusader C1 Spirit", "m": "Crusader", "p": 125}, {"id": "c2_hercules", "n": "Crusader C2 Hercules", "m": "Crusader", "p": 400}, {"id": "e1_spirit", "n": "Crusader E1 Spirit", "m": "Crusader", "p": 160}, {"id": "m2_hercules", "n": "Crusader M2 Hercules", "m": "Crusader", "p": 520}, {"id": "mercury", "n": "Crusader Mercury Star Runner", "m": "Crusader", "p": 260}, {"id": "buccaneer", "n": "Drake Buccaneer", "m": "Drake", "p": 110}, {"id": "caterpillar", "n": "Drake Caterpillar", "m": "Drake", "p": 330}, {"id": "clipper", "n": "Drake Clipper", "m": "Drake", "p": 75}, {"id": "corsair", "n": "Drake Corsair", "m": "Drake", "p": 250}, {"id": "cutlass_black", "n": "Drake Cutlass Black", "m": "Drake", "p": 110}, {"id": "cutlass_blue", "n": "Drake Cutlass Blue", "m": "Drake", "p": 175}, {"id": "cutlass_red", "n": "Drake Cutlass Red", "m": "Drake", "p": 135}, {"id": "cutter", "n": "Drake Cutter", "m": "Drake", "p": 45}, {"id": "golem", "n": "Drake Golem", "m": "Drake", "p": 0}, {"id": "herald", "n": "Drake Herald", "m": "Drake", "p": 85}, {"id": "ironclad", "n": "Drake Ironclad", "m": "Drake", "p": 0}, {"id": "ironclad_assault", "n": "Drake Ironclad Assault", "m": "Drake", "p": 0}, {"id": "persecutor", "n": "Drake Persecutor", "m": "Drake", "p": 250}, {"id": "pitbull", "n": "Drake Pitbull", "m": "Drake", "p": 55}, {"id": "vulture", "n": "Drake Vulture", "m": "Drake", "p": 140}, {"id": "blade", "n": "Esperia Blade", "m": "Esperia", "p": 275}, {"id": "glaive", "n": "Esperia Glaive", "m": "Esperia", "p": 350}, {"id": "harbinger", "n": "Esperia Harbinger", "m": "Esperia", "p": 350}, {"id": "khartu_al", "n": "Esperia Khartu-Al", "m": "Esperia", "p": 170}, {"id": "prowler", "n": "Esperia Prowler", "m": "Esperia", "p": 425}, {"id": "stinger", "n": "Esperia Stinger", "m": "Esperia", "p": 285}, {"id": "railen", "n": "Gatac Railen", "m": "Gatac", "p": 150}, {"id": "rastar", "n": "Gatac Rastar", "m": "Gatac", "p": 0}, {"id": "alpha_wolf", "n": "Kruger Alpha Wolf", "m": "Kruger", "p": 120}, {"id": "p_52_merlin", "n": "Kruger P-52 Merlin", "m": "Kruger", "p": 20}, {"id": "p_72_archimedes", "n": "Kruger P-72 Archimedes", "m": "Kruger", "p": 25}, {"id": "endeavor", "n": "MISC Endeavor", "m": "MISC", "p": 350}, {"id": "expanse", "n": "MISC Expanse", "m": "MISC", "p": 150}, {"id": "freelancer", "n": "MISC Freelancer", "m": "MISC", "p": 110}, {"id": "freelancer_dur", "n": "MISC Freelancer DUR", "m": "MISC", "p": 135}, {"id": "freelancer_max", "n": "MISC Freelancer MAX", "m": "MISC", "p": 150}, {"id": "freelancer_mis", "n": "MISC Freelancer MIS", "m": "MISC", "p": 175}, {"id": "fury", "n": "MISC Fury", "m": "MISC", "p": 55}, {"id": "hull_a", "n": "MISC Hull A", "m": "MISC", "p": 80}, {"id": "hull_b", "n": "MISC Hull B", "m": "MISC", "p": 120}, {"id": "hull_c", "n": "MISC Hull C", "m": "MISC", "p": 300}, {"id": "hull_d", "n": "MISC Hull D", "m": "MISC", "p": 400}, {"id": "hull_e", "n": "MISC Hull E", "m": "MISC", "p": 700}, {"id": "mole", "n": "MISC MOLE", "m": "MISC", "p": 315}, {"id": "odyssey", "n": "MISC Odyssey", "m": "MISC", "p": 450}, {"id": "prospector", "n": "MISC Prospector", "m": "MISC", "p": 155}, {"id": "razor", "n": "MISC Razor", "m": "MISC", "p": 135}, {"id": "reliant_kore", "n": "MISC Reliant Kore", "m": "MISC", "p": 65}, {"id": "reliant_mako", "n": "MISC Reliant Mako", "m": "MISC", "p": 75}, {"id": "reliant_sen", "n": "MISC Reliant Sen", "m": "MISC", "p": 65}, {"id": "reliant_tana", "n": "MISC Reliant Tana", "m": "MISC", "p": 65}, {"id": "starfarer", "n": "MISC Starfarer", "m": "MISC", "p": 340}, {"id": "starfarer_gemini", "n": "MISC Starfarer Gemini", "m": "MISC", "p": 340}, {"id": "starlite", "n": "MISC Starlite", "m": "MISC", "p": 0}, {"id": "100i", "n": "Origin 100i", "m": "Origin", "p": 50}, {"id": "125a", "n": "Origin 125a", "m": "Origin", "p": 60}, {"id": "135c", "n": "Origin 135c", "m": "Origin", "p": 65}, {"id": "300i", "n": "Origin 300i", "m": "Origin", "p": 60}, {"id": "315p", "n": "Origin 315p", "m": "Origin", "p": 65}, {"id": "325a", "n": "Origin 325a", "m": "Origin", "p": 70}, {"id": "350r", "n": "Origin 350r", "m": "Origin", "p": 125}, {"id": "400i", "n": "Origin 400i", "m": "Origin", "p": 250}, {"id": "600i", "n": "Origin 600i", "m": "Origin", "p": 350}, {"id": "600i_explorer", "n": "Origin 600i Explorer", "m": "Origin", "p": 475}, {"id": "600i_touring", "n": "Origin 600i Touring", "m": "Origin", "p": 435}, {"id": "85x", "n": "Origin 85X", "m": "Origin", "p": 50}, {"id": "890_jump", "n": "Origin 890 Jump", "m": "Origin", "p": 950}, {"id": "m50", "n": "Origin M50", "m": "Origin", "p": 100}, {"id": "m80", "n": "Origin M80", "m": "Origin", "p": 250}, {"id": "apollo_medivac", "n": "RSI Apollo Medivac", "m": "RSI", "p": 275}, {"id": "apollo_triage", "n": "RSI Apollo Triage", "m": "RSI", "p": 250}, {"id": "aurora_cl", "n": "RSI Aurora CL", "m": "RSI", "p": 45}, {"id": "aurora_es", "n": "RSI Aurora ES", "m": "RSI", "p": 20}, {"id": "aurora_ln", "n": "RSI Aurora LN", "m": "RSI", "p": 40}, {"id": "aurora_lx", "n": "RSI Aurora LX", "m": "RSI", "p": 35}, {"id": "aurora_mr", "n": "RSI Aurora MR", "m": "RSI", "p": 30}, {"id": "constellation_andromeda", "n": "RSI Constellation Andromeda", "m": "RSI", "p": 240}, {"id": "constellation_aquila", "n": "RSI Constellation Aquila", "m": "RSI", "p": 310}, {"id": "constellation_phoenix", "n": "RSI Constellation Phoenix", "m": "RSI", "p": 350}, {"id": "constellation_taurus", "n": "RSI Constellation Taurus", "m": "RSI", "p": 190}, {"id": "galaxy", "n": "RSI Galaxy", "m": "RSI", "p": 380}, {"id": "hermes", "n": "RSI Hermes", "m": "RSI", "p": 220}, {"id": "mantis", "n": "RSI Mantis", "m": "RSI", "p": 150}, {"id": "orion", "n": "RSI Orion", "m": "RSI", "p": 575}, {"id": "perseus", "n": "RSI Perseus", "m": "RSI", "p": 800}, {"id": "polaris", "n": "RSI Polaris", "m": "RSI", "p": 800}, {"id": "scorpius", "n": "RSI Scorpius", "m": "RSI", "p": 220}, {"id": "zeus_es", "n": "RSI Zeus ES", "m": "RSI", "p": 200}, {"id": "zeus_mr", "n": "RSI Zeus MR", "m": "RSI", "p": 185}, {"id": "ranger_cv", "n": "Tumbril Ranger CV", "m": "Tumbril", "p": 30}, {"id": "storm", "n": "Tumbril Storm", "m": "Tumbril", "p": 60}, {"id": "storm_aa", "n": "Tumbril Storm AA", "m": "Tumbril", "p": 70}], "aliases": {"Zeus Mk II MR": "zeus_mr", "Zeus MR": "zeus_mr", "Zeus Mk II ES": "zeus_es", "Zeus ES": "zeus_es", "L-22 Alpha Wolf": "alpha_wolf", "Alpha Wolf": "alpha_wolf", "Pitbull": "pitbull", "Stinger": "stinger", "MTC": "stinger", "Hermes": "hermes", "Ares Inferno": "ares_inferno", "Ares Ion": "ares_ion", "Perseus": "perseus", "Paladin": "paladin", "600i": "600i", "Mercury Star Runner": "mercury", "Star Runner": "mercury", "Carrack": "carrack", "Hammerhead": "hammerhead", "Reclaimer": "reclaimer", "Caterpillar": "caterpillar", "Corsair": "corsair", "Liberator": "liberator", "Galaxy": "galaxy", "Polaris": "polaris", "Avenger Titan": "avenger_titan", "Gladius": "gladius", "Arrow": "arrow", "Nomad": "nomad", "Sabre": "sabre", "Sabre Raven": "sabre_raven", "Cutlass Black": "cutlass_black", "Freelancer": "freelancer", "Freelancer MAX": "freelancer_max", "Freelancer MIS": "freelancer_mis", "C1 Spirit": "c1_spirit", "A1 Spirit": "a1_spirit", "Hull B": "hull_b", "Hull A": "hull_a", "Hull C": "hull_c", "Prospector": "prospector", "Vulture": "vulture", "MOLE": "mole", "Terrapin": "terrapin", "Scorpius": "scorpius", "Constellation Andromeda": "constellation_andromeda", "F7C Hornet MkII": "f7c_mk2", "F7A Hornet MkII": "f7a_mk2", "F7A Hornet MkI": "f7a_mk1", "F8C Lightning": "f8c", "100i": "100i", "125a": "125a", "135c": "135c", "350r": "350r", "400i": "400i", "600i Explorer": "600i_explorer", "600i Touring": "600i_touring", "85X": "85x", "Apollo Medivac": "apollo_medivac", "Apollo Triage": "apollo_triage", "Aurora CL": "aurora_cl", "Aurora ES": "aurora_es", "Aurora LX": "aurora_lx", "Avenger Warlock": "avenger_warlock", "Blade": "blade", "Buccaneer": "buccaneer", "C8R Pisces": "c8r_pisces", "C8X Pisces": "c8x_pisces", "Carrack Expedition": "carrack_expedition", "Constellation Aquila": "constellation_aquila", "Constellation Phoenix": "constellation_phoenix", "Constellation Taurus": "constellation_taurus", "Crucible": "crucible", "Cutlass Blue": "cutlass_blue", "Cutter": "cutter", "Defender": "defender", "Eclipse": "eclipse", "Endeavor": "endeavor", "F7C Hornet": "f7c_hornet", "F7C-M Super Hornet": "f7c_m_super_hornet", "F7C-R Hornet Tracker": "f7c_r_hornet_tracker", "F7C-S Hornet Ghost": "f7c_s_hornet_ghost", "Fury": "fury", "Gladiator": "gladiator", "Gladius Valiant": "gladius_valiant", "Glaive": "glaive", "Herald": "herald", "Hull D": "hull_d", "Hull E": "hull_e", "Hurricane": "hurricane", "Khartu-Al": "khartu_al", "M50": "m50", "Mantis": "mantis", "Merchantman": "merchantman", "Nautilus": "nautilus", "Nox": "nox", "Odyssey": "odyssey", "Orion": "orion", "P-52 Merlin": "p_52_merlin", "P-72 Archimedes": "p_72_archimedes", "Prowler": "prowler", "Railen": "railen", "Razor": "razor", "Redeemer": "redeemer", "Reliant Kore": "reliant_kore", "Reliant Mako": "reliant_mako", "Reliant Sen": "reliant_sen", "Reliant Tana": "reliant_tana", "Retaliator Bomber": "retaliator_bomber", "San'tok.yai": "santokyai", "SRV": "srv", "Starfarer": "starfarer", "Starfarer Gemini": "starfarer_gemini", "Valkyrie": "valkyrie", "Vanguard Harbinger": "vanguard_harbinger", "Vanguard Hoplite": "vanguard_hoplite", "Vanguard Sentinel": "vanguard_sentinel", "Vanguard Warden": "vanguard_warden", "Vulcan": "vulcan", "E1 Spirit": "e1_spirit", "Expanse": "expanse", "Harbinger": "harbinger", "Pioneer": "pioneer", "Idris-P": "idris_p", "Javelin": "javelin", "Ranger CV": "ranger_cv", "Storm": "storm", "Storm AA": "storm_aa", "Persecutor": "persecutor", "Golem": "golem", "Rastar": "rastar"}}</div>
+<script>
+var DB=JSON.parse(document.getElementById("DATA").textContent);
+var SHIPS=DB.ships,ALIASES=DB.aliases,SP={};
+SHIPS.forEach(function(s){if(s.p>0)SP[s.n]=s.p;});
+var isLight=localStorage.getItem("sc-theme")==="light";
+if(isLight)document.body.classList.add("light");
+document.addEventListener("DOMContentLoaded",function(){
+  var tb=document.getElementById("theme-toggle");
+  function updateLabel(){tb.innerHTML=isLight?"&#x263D; DARK MODE":"&#x263C; LIGHT MODE";}
+  updateLabel();
+  tb.addEventListener("click",function(){
+    isLight=!isLight;document.body.classList.toggle("light");
+    localStorage.setItem("sc-theme",isLight?"light":"dark");
+    updateLabel();
+  });
+});
+</script>
+<script>
+/* SC Fleet Planner - All Logic */
+var NOISE=["self-land hangar","aeroview hangar","revel & york","vfg industrial","poster","model ","trophy","pennant","manual","digital download","name reservation","best in show","starting money","star citizen digital","squadron 42 digital"];
+var fleet=[],melts=new Set(),credit=0,chains=[],priceUpdateMsg="";
+
+function getStorePrice(name){
+  if(SP[name])return SP[name];
+  if(ALIASES[name]){var sid=ALIASES[name];for(var i=0;i<SHIPS.length;i++){if(SHIPS[i].id===sid)return SHIPS[i].p;}}
+  var nl=name.toLowerCase();
+  for(var i=0;i<SHIPS.length;i++){if(SHIPS[i].n.toLowerCase()===nl)return SHIPS[i].p;}
+  return 0;
+}
+function splitCSV(line){var r=[],cur="",inQ=false;for(var k=0;k<line.length;k++){var ch=line[k];if(ch==='"'){if(inQ&&k+1<line.length&&line[k+1]==='"'){cur+='"';k++;}else{inQ=!inQ;}}else if(ch===','&&!inQ){r.push(cur.trim());cur="";}else{cur+=ch;}}r.push(cur.trim());return r;}
+
+function processCSV(text){
+  var lines=text.split("\n").filter(function(l){return l.trim().length>0;});
+
+  /* Split into hangar section and store price section */
+  var hangarLines=[];
+  var storeLines=[];
+  var inStore=false;
+  for(var i=0;i<lines.length;i++){
+    var first=splitCSV(lines[i])[0]||"";
+    if(first==="---"||first==="STORE PRICES"){inStore=true;continue;}
+    if(first==="STORE"){storeLines.push(lines[i]);}
+    else if(!inStore){hangarLines.push(lines[i]);}
+  }
+
+  /* Parse store prices — update SP and SHIPS */
+  if(storeLines.length>0){
+    var importedCount=0;
+    storeLines.forEach(function(line){
+      var v=splitCSV(line);
+      if(v.length<5)return;
+      var name=v[1]||"";
+      var price=parseFloat((v[3]||"0").replace(/[$,]/g,""))||0;
+      var mfr=v[6]||"";
+      if(name&&price>0){
+        SP[name]=price;
+        /* Add to SHIPS if not already there */
+        var found=false;
+        for(var j=0;j<SHIPS.length;j++){if(SHIPS[j].n===name){SHIPS[j].p=price;found=true;break;}}
+        if(!found){
+          var nl2=name.toLowerCase();var merged=false;
+          for(var k=0;k<SHIPS.length;k++){
+            var sn=SHIPS[k].n.toLowerCase();
+            var snShort=sn.split(" ").slice(1).join(" ");
+            if(sn===nl2||snShort===nl2||nl2.indexOf(sn)>=0||sn.indexOf(nl2)>=0){
+              SHIPS[k].p=price;if(mfr&&!SHIPS[k].m)SHIPS[k].m=mfr;merged=true;break;
+            }
+          }
+          if(!merged){var dn=mfr?(mfr+" "+name):name;SHIPS.push({id:name.toLowerCase().replace(/ /g,"_"),n:dn,m:mfr,p:price});}
+        }
+        importedCount++;
+      }
+    });
+    /* Re-sort SHIPS */
+    SHIPS.sort(function(a,b){return a.n.localeCompare(b.n);});
+    console.log("Imported "+importedCount+" store prices from CSV");
+  }
+
+  /* Parse hangar items */
+  if(hangarLines.length<2){
+    document.getElementById("status").textContent="No hangar data found in CSV";
+    if(storeLines.length>0){
+      document.getElementById("status").textContent=storeLines.length+" store prices imported, but no hangar items. Re-export with your hangar.";
+    }
+    return;
+  }
+  var hdr=splitCSV(hangarLines[0]).map(function(h){return h.toLowerCase();});
+  var ci={};
+  for(var j=0;j<hdr.length;j++){if(hdr[j]==="pledge name")ci.pledge=j;if(hdr[j]==="item name")ci.name=j;if(hdr[j]==="type")ci.type=j;if(hdr[j]==="melt value")ci.melt=j;if(hdr[j]==="insurance")ci.ins=j;if(hdr[j]==="date")ci.date=j;if(hdr[j]==="manufacturer")ci.mfr=j;}
+  var rows=[];
+  for(var i=1;i<hangarLines.length;i++){var v=splitCSV(hangarLines[i]);if(v.length<2)continue;var name=ci.name!==undefined?(v[ci.name]||""):"";if(!name)continue;var melt=ci.melt!==undefined?(parseFloat((v[ci.melt]||"0").replace(/[$,]/g,""))||0):0;rows.push({pledge:ci.pledge!==undefined?(v[ci.pledge]||name):name,name:name,type:ci.type!==undefined?(v[ci.type]||"").toLowerCase():"",melt:melt,ins:ci.ins!==undefined?(v[ci.ins]||""):"",date:ci.date!==undefined?(v[ci.date]||""):"",mfr:ci.mfr!==undefined?(v[ci.mfr]||""):""});}
+  var pledges={};rows.forEach(function(r){if(!pledges[r.pledge])pledges[r.pledge]={rows:[],melt:r.melt,date:r.date};pledges[r.pledge].rows.push(r);});
+  fleet=[];
+  Object.keys(pledges).forEach(function(pn){var pd=pledges[pn],ins="";pd.rows.forEach(function(r){if(r.ins)ins=r.ins;});var primary=pd.rows.filter(function(r){var nl=r.name.toLowerCase();return(r.type==="ship"||r.type==="ccu")&&!NOISE.some(function(n){return nl.indexOf(n)>=0;});});var paints=pd.rows.filter(function(r){return r.type==="paint";});if(primary.length>0){primary.forEach(function(r){var sp=getStorePrice(r.name);fleet.push({name:r.name,pledge:pn,melt:pd.melt,store:sp||pd.melt,type:r.type,ins:ins,date:pd.date,mfr:r.mfr});});}else if(paints.length>0&&pd.melt>0){paints.forEach(function(r){fleet.push({name:r.name,pledge:pn,melt:pd.melt,store:pd.melt,type:"paint",ins:"",date:pd.date,mfr:r.mfr});});}else if(pd.melt>0){fleet.push({name:pn,pledge:pn,melt:pd.melt,store:pd.melt,type:"gear",ins:"",date:pd.date,mfr:""});}});
+  melts=new Set();credit=0;
+  /* Preserve existing CCU chains if reimporting (user updated prices) */
+  if(chains.length>0){
+    var keepChains=confirm("You have "+chains.length+" CCU chain(s) from a previous session.\n\nKeep them? (OK = keep chains, Cancel = start fresh)");
+    if(!keepChains)chains=[];
+  }
+  var priceNote=storeLines.length>0?" ("+storeLines.length+" store prices)":"";
+  document.getElementById("status").textContent=fleet.length+" items loaded"+priceNote;
+  document.getElementById("landing").style.display="none";
+  render();
+}
+
+/* File handling */
+var dz=document.getElementById("dropzone"),fi=document.getElementById("fileinput");
+dz.addEventListener("click",function(){fi.click();});
+dz.addEventListener("dragover",function(e){e.preventDefault();e.stopPropagation();});
+dz.addEventListener("drop",function(e){e.preventDefault();e.stopPropagation();if(e.dataTransfer.files[0])readF(e.dataTransfer.files[0]);});
+fi.addEventListener("change",function(){if(fi.files[0])readF(fi.files[0]);});
+function readF(file){var st=document.getElementById("status");st.textContent="Loading "+file.name+"...";var r=new FileReader();r.onload=function(e){try{if(file.name.indexOf(".json")>=0){loadPlan(e.target.result);}else{processCSV(e.target.result);}}catch(err){st.textContent="Error: "+err.message;st.style.color="var(--red)";console.error(err);}};r.readAsText(file);}
+
+/* CCU Chain Logic */
+function toggleMelt(idx){if(melts.has(idx))melts.delete(idx);else melts.add(idx);render();}
+function setCredit(val){credit=Number(val)||0;render();}
+function addChain(){chains.push({source:"",sourcePrice:0,steps:[]});render();}
+function setChainSource(ci,name){chains[ci].source=name;chains[ci].sourcePrice=getStorePrice(name);var owned=fleet.filter(function(s){return s.type==="ship"&&s.name===name;});if(owned.length>0)chains[ci].sourcePrice=owned[0].store;render();}
+function addChainStep(ci){chains[ci].steps.push({ship:"",price:0,owned:false});render();}
+function setChainStep(ci,si,name){
+  chains[ci].steps[si].ship=name;chains[ci].steps[si].price=getStorePrice(name);
+  /* Auto-detect if we own this CCU */
+  var match=findMatchingCcu(chains[ci],si);
+  chains[ci].steps[si].owned=!!match;
+  render();
+}
+function setChainStepPrice(ci,si,val){chains[ci].steps[si].price=Number(val)||0;render();}
+function toggleChainStepOwned(ci,si){chains[ci].steps[si].owned=!chains[ci].steps[si].owned;render();}
+function removeChainStep(ci,si){chains[ci].steps.splice(si,1);render();}
+function removeChain(ci){chains.splice(ci,1);render();}
+function getChainCost(chain){var total=0,prevPrice=chain.sourcePrice;chain.steps.forEach(function(step){if(!step.owned&&step.price>prevPrice){total+=step.price-prevPrice;}if(step.price>0)prevPrice=step.price;});return total;}
+function doExport(){var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship";});var targets=[];chains.forEach(function(c){if(c.steps.length>0){var last=c.steps[c.steps.length-1];if(last.ship)targets.push(last.ship);}});var mn=prompt("Enter your name for the org export:","");if(!mn)return;var csv="Member Name,Ship Name,Insurance\n";kept.forEach(function(s){csv+='"'+mn+'","'+s.name+'","'+s.ins+'"\n';});targets.forEach(function(t){csv+='"'+mn+'","'+t+'",""\n';});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=mn.replace(/ /g,"_")+".csv";a.click();}
+
+function ce(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
+function ct(tag,text,css){var e=document.createElement(tag);e.textContent=text;if(css)e.style.cssText=css;return e;}
+function makeOpt(val,text){var o=document.createElement("option");o.value=val;o.textContent=text;return o;}
+
+function makeShipSelect(value,onChange,showOwned){
+  var id="dl_"+Math.random().toString(36).substr(2,6);
+  var wrap=document.createElement("div");wrap.style.cssText="position:relative;flex:1;max-width:240px;";
+  var inp=document.createElement("input");
+  inp.type="text";inp.value=value||"";inp.placeholder="Type to search...";
+  inp.setAttribute("list",id);
+  inp.style.cssText="background:var(--bg2);border:1px solid var(--border4);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;outline:none;width:100%;";
+  var timer=null;
+  inp.addEventListener("change",function(){onChange(this.value);});
+  inp.addEventListener("input",function(){
+    var v=this.value;if(timer)clearTimeout(timer);
+    timer=setTimeout(function(){
+      var exact=SHIPS.find(function(s){return s.n===v;});
+      if(!exact){var ow=fleet.filter(function(s){return s.type==="ship";});exact=ow.find(function(s){return s.name===v;});}
+      if(exact)onChange(v);
+    },300);
+  });
+  var dl=document.createElement("datalist");dl.id=id;
+  if(showOwned){
+    fleet.filter(function(s){return s.type==="ship"&&!melts.has(fleet.indexOf(s));}).forEach(function(s){
+      var o=document.createElement("option");o.value=s.name;
+      o.label=s.name+" ($"+s.store+") [OWNED]";dl.appendChild(o);
+    });
+  }
+  SHIPS.forEach(function(s){
+    if(s.p>0){var o=document.createElement("option");o.value=s.n;o.label=s.n+" ($"+s.p+")";dl.appendChild(o);}
+  });
+  wrap.appendChild(inp);wrap.appendChild(dl);
+  return wrap;
+}
+
+function savePlan(){
+  var plan={version:1,fleet:fleet,melts:Array.from(melts),credit:credit,chains:chains,savedAt:new Date().toISOString()};
+  var json=JSON.stringify(plan,null,2);
+  var blob=new Blob([json],{type:"application/json"});
+  var a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="fleet_plan_"+new Date().toISOString().slice(0,10)+".json";a.click();
+}
+
+function loadPlan(text){
+  try{
+    var plan=JSON.parse(text);
+    if(!plan.fleet){document.getElementById("status").textContent="Invalid plan file!";return;}
+    fleet=plan.fleet;
+    melts=new Set(plan.melts||[]);
+    credit=plan.credit||0;
+    chains=plan.chains||[];
+    document.getElementById("status").textContent="Plan loaded! "+fleet.length+" items, "+chains.length+" chains";
+    document.getElementById("landing").style.display="none";
+    render();
+  }catch(e){
+    document.getElementById("status").textContent="Error loading plan: "+e.message;
+  }
+}
+
+function fetchWikiPrices(){
+  console.log("[Fleet Planner] Starting wiki price fetch...");
+  var allShips=[],pg=1;
+  /* Timeout after 8 seconds */
+  var timedOut=false;
+  var timeout=new Promise(function(resolve){
+    setTimeout(function(){timedOut=true;console.log("[Fleet Planner] Fetch timed out");resolve([]);},8000);
+  });
+  function doFetch(){
+  var allShips2=[],pg2=1;
+  function next(){
+    console.log("[Fleet Planner] Fetching page "+pg2+"...");
+    return fetch("https://api.star-citizen.wiki/api/v2/vehicles?limit=200&page="+pg2)
+      .then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+      .then(function(data){
+        var vehicles=data.data||[];
+        if(vehicles.length===0)return updatePricesFromWiki(allShips);
+        vehicles.forEach(function(v){
+          var name=v.name||"";var price=0;
+          if(v.pledge_price)price=parseFloat(v.pledge_price);
+          else if(v.msrp)price=parseFloat(v.msrp);
+          if(name&&price>0)allShips2.push({name:name,price:price,mfr:(v.manufacturer&&v.manufacturer.name)||""});
+        });
+        var lastPage=(data.meta&&data.meta.last_page)||1;
+        console.log("[Fleet Planner] Got "+allShips2.length+" ships, page "+pg2+"/"+lastPage);
+        if(pg2<lastPage&&!timedOut){pg2++;return next();}
+        return updatePricesFromWiki(allShips2);
+      });
+  }
+  return next().catch(function(e){console.log("[Fleet Planner] Wiki fetch failed:",e);return 0;});
+  }
+  return Promise.race([doFetch(),timeout]).then(function(result){
+    if(Array.isArray(result))return 0;
+    return result;
+  });
+}
+
+function updatePricesFromWiki(ships){
+  var count=0;
+  ships.forEach(function(s){
+    SP[s.name]=s.price;count++;
+    var found=false;
+    for(var i=0;i<SHIPS.length;i++){
+      var sn=SHIPS[i].n.toLowerCase(),nl=s.name.toLowerCase();
+      var snShort=sn.split(" ").slice(1).join(" ");
+      if(sn===nl||snShort===nl){SHIPS[i].p=s.price;found=true;break;}
+    }
+    if(!found){var dn=s.mfr?(s.mfr+" "+s.name):s.name;SHIPS.push({id:s.name.toLowerCase().replace(/ /g,"_"),n:dn,m:s.mfr,p:s.price});}
+  });
+  SHIPS.sort(function(a,b){return a.n.localeCompare(b.n);});
+  /* Also update fleet store values */
+  fleet.forEach(function(f){var sp=getStorePrice(f.name);if(sp>0)f.store=sp;});
+  return count;
+}
+
+function stripMfr(name){
+  /* Remove known manufacturer prefixes for matching */
+  var prefixes=["aegis ","anvil ","argo ","aopoa ","banu ","consolidated outland ","crusader ","drake ","esperia ","gatac ","kruger ","misc ","origin ","rsi ","tumbril "];
+  var nl=name.toLowerCase();
+  for(var i=0;i<prefixes.length;i++){
+    if(nl.indexOf(prefixes[i])===0)return nl.substr(prefixes[i].length);
+  }
+  return nl;
+}
+
+function ccuMatches(ccuName,shipName){
+  /* Check if a CCU name contains a ship name, with fuzzy manufacturer handling */
+  var cn=ccuName.toLowerCase();
+  var sn=shipName.toLowerCase();
+  if(cn.indexOf(sn)>=0)return true;
+  /* Try without manufacturer prefix */
+  var short=stripMfr(shipName);
+  if(cn.indexOf(short)>=0)return true;
+  return false;
+}
+
+function findMatchingCcu(chain,stepIdx){
+  var step=chain.steps[stepIdx];if(!step.ship)return null;
+  var prev=stepIdx>0?chain.steps[stepIdx-1].ship:chain.source;
+  for(var i=0;i<fleet.length;i++){
+    if(fleet[i].type!=="ccu")continue;
+    var cn=fleet[i].name.toLowerCase();
+    /* Must match the target ship */
+    if(!ccuMatches(fleet[i].name,step.ship))continue;
+    /* Bonus: check if it also matches the source (from->to pattern) */
+    if(prev&&ccuMatches(fleet[i].name,prev))return fleet[i];
+    /* Or just matches "to <target>" */
+    if(cn.indexOf("to "+stripMfr(step.ship))>=0)return fleet[i];
+  }
+  return null;
+}
+function render(){
+  var app=document.getElementById("app");
+  while(app.firstChild)app.removeChild(app.firstChild);
+  if(!fleet.length)return;
+  var meltT=0;fleet.forEach(function(f,i){if(melts.has(i))meltT+=f.melt;});
+  var totC=meltT+credit,ccuT=0;
+  chains.forEach(function(c){ccuT+=getChainCost(c);});
+  var rem=totC-ccuT,ok=rem>=0;
+  var ships=fleet.filter(function(s){return s.type==="ship";});
+
+  /* SHIPS */
+  var totalStore=0,totalSaved=0;
+  ships.forEach(function(s){totalStore+=s.store;if(s.store>s.melt)totalSaved+=(s.store-s.melt);});
+  var shd=ce("div","shd");shd.appendChild(ct("span","SHIPS ("+ships.length+")"));
+  shd.appendChild(ct("span","Value: $"+totalStore+(totalSaved>0?" | Saved: $"+totalSaved:""),"font-size:12px;color:var(--text3);font-weight:400;"));
+  app.appendChild(shd);
+  var colHdr=ce("div");colHdr.style.cssText="display:flex;align-items:center;gap:10px;padding:0 14px 4px 42px;";
+  colHdr.appendChild(ct("span","","flex:1;"));
+  colHdr.appendChild(ct("span","MELT","width:65px;text-align:right;font-size:10px;color:var(--text4);letter-spacing:1px;"));
+  colHdr.appendChild(ct("span","VALUE","width:65px;text-align:right;font-size:10px;color:var(--text4);letter-spacing:1px;"));
+  colHdr.appendChild(ct("span","SAVED","width:100px;text-align:right;font-size:10px;color:var(--text4);letter-spacing:1px;"));
+  app.appendChild(colHdr);
+  fleet.forEach(function(item,idx){
+    if(item.type!=="ship")return;var m=melts.has(idx);
+    var card=ce("div","cd");card.style.borderLeft="3px solid "+(m?"var(--red)":"rgba(200,149,100,0.15)");card.style.flexWrap="nowrap";if(m)card.style.opacity="0.45";
+    var cb=document.createElement("input");cb.type="checkbox";cb.checked=m;(function(i){cb.addEventListener("change",function(){toggleMelt(i);});})(idx);card.appendChild(cb);
+    var info=ce("div");info.style.cssText="flex:1;min-width:0;";
+    info.appendChild(ct("div",(m?"[MELT] ":"")+item.name,"font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"));
+    if(item.ins)info.appendChild(ct("div",item.ins,"font-size:11px;color:var(--text3);margin-top:2px;"));
+    card.appendChild(info);
+    card.appendChild(ct("span","$"+item.melt,"width:65px;text-align:right;font-size:12px;color:"+(m?"var(--red)":"var(--green)")+";flex-shrink:0;"));
+    card.appendChild(ct("span","$"+item.store,"width:65px;text-align:right;font-size:12px;color:var(--blue);flex-shrink:0;"));
+    var saved=item.store>item.melt?item.store-item.melt:0;var pct=saved>0?Math.round(saved/item.store*100):0;
+    card.appendChild(ct("span",saved>0?"+$"+saved+" ("+pct+"%)":"\u2014","width:100px;text-align:right;font-size:12px;color:"+(saved>0?"var(--yellow)":"var(--text5)")+";flex-shrink:0;"));
+    app.appendChild(card);
+  });
+
+  /* CCUs in hangar */
+  var ccuItems=fleet.filter(function(s){return s.type==="ccu";});
+  if(ccuItems.length>0){
+    app.appendChild(ct("div","CCUs IN HANGAR ("+ccuItems.length+")","font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;border-bottom:1px solid rgba(200,149,100,0.12);padding:8px 0 6px;margin:20px 0 8px;"));
+    ccuItems.forEach(function(c){var idx=fleet.indexOf(c),m=melts.has(idx);var card=ce("div","cd");card.style.borderLeft="3px solid "+(m?"var(--red)":"var(--yellow)");if(m)card.style.opacity="0.45";var cb=document.createElement("input");cb.type="checkbox";cb.checked=m;(function(i){cb.addEventListener("change",function(){toggleMelt(i);});})(idx);card.appendChild(cb);card.appendChild(ct("div",c.name,"flex:1;font-size:13px;font-weight:600;color:var(--text);"));card.appendChild(ct("span","$"+c.melt,"font-size:12px;color:"+(m?"var(--red)":"var(--green)")+";"));app.appendChild(card);});
+  }
+
+  /* Paints & Gear */
+  var other=fleet.filter(function(s){return s.type!=="ship"&&s.type!=="ccu";});
+  if(other.length>0){
+    app.appendChild(ct("div","PAINTS & GEAR ("+other.length+")","font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;border-bottom:1px solid rgba(200,149,100,0.12);padding:8px 0 6px;margin:20px 0 8px;"));
+    other.forEach(function(o){var idx=fleet.indexOf(o),m=melts.has(idx);var card=ce("div","cd");card.style.borderLeft="3px solid "+(m?"var(--red)":"rgba(255,255,255,0.04)");if(m)card.style.opacity="0.45";var cb=document.createElement("input");cb.type="checkbox";cb.checked=m;(function(i){cb.addEventListener("change",function(){toggleMelt(i);});})(idx);card.appendChild(cb);card.appendChild(ct("div",o.name,"flex:1;font-size:12px;color:var(--text3);"));card.appendChild(ct("span","$"+o.melt,"font-size:12px;color:"+(m?"var(--red)":"var(--green)")+";"));app.appendChild(card);});
+  }
+
+  /* Store Credit */
+  app.appendChild(ct("div","STORE CREDIT","font-size:11px;font-weight:700;color:var(--gold);letter-spacing:2px;border-bottom:1px solid rgba(200,149,100,0.12);padding:8px 0 6px;margin:20px 0 8px;"));
+  var crRow=ce("div");crRow.style.cssText="display:flex;align-items:center;gap:10px;";
+  crRow.appendChild(ct("span","$","font-size:14px;color:var(--text5);"));
+  var crIn=document.createElement("input");crIn.type="number";crIn.value=credit;crIn.style.width="120px";crIn.style.fontSize="16px";
+  crIn.addEventListener("change",function(){setCredit(this.value);});crRow.appendChild(crIn);
+  crRow.appendChild(ct("span","+ $"+meltT+" melts = $"+totC,"font-size:13px;color:var(--text3);"));
+  app.appendChild(crRow);
+
+  /* DASHBOARD */
+  var dash=ce("div","dash");dash.style.marginTop="24px";
+  function dc(val,label,color,wide){var c=ce("div","dc"+(wide?" w":""));c.appendChild(ct("div",val,"font-size:"+(wide?"36px":"28px")+";font-weight:700;color:"+color+";"));c.appendChild(ct("div",label,"font-size:10px;color:var(--text3);letter-spacing:2px;margin-top:4px;"));return c;}
+  dash.appendChild(dc("$"+totC,"TOTAL CREDIT","var(--green)"));
+  dash.appendChild(dc("$"+ccuT,"CCU COST",ok?"var(--yellow)":"var(--red)"));
+  var remC=dc(ok?"$"+rem:"- $"+Math.abs(rem),ok?"REMAINING":"SHORT",ok?"var(--blue)":"var(--red)",true);
+  remC.style.background=ok?"rgba(79,195,247,0.03)":"rgba(255,82,82,0.04)";
+  remC.style.borderColor=ok?"rgba(79,195,247,0.15)":"rgba(255,82,82,0.2)";
+  if(totC>0){var bar=ce("div","db");bar.style.marginTop="10px";bar.style.height="8px";var fill=ce("div","df");fill.style.background=ok?"var(--blue)":"var(--red)";fill.style.width=Math.min(100,Math.round(ccuT/Math.max(totC,1)*100))+"%";bar.appendChild(fill);remC.appendChild(bar);remC.appendChild(ct("div","$"+ccuT+" of $"+totC+" allocated ("+Math.round(ccuT/Math.max(totC,1)*100)+"%)","font-size:11px;color:var(--text3);margin-top:4px;"));}
+  dash.appendChild(remC);app.appendChild(dash);
+
+  /* CCU CHAINS */
+  /* SAVE / EXPORT buttons - always visible */
+  var actRow=document.createElement("div");actRow.style.cssText="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0;";
+  var updateBtn=ct("span","\u21bb UPDATE PRICES","padding:10px 24px;border:1px solid rgba(79,195,247,0.15);border-radius:6px;background:rgba(79,195,247,0.03);color:var(--blue);cursor:pointer;font-size:12px;letter-spacing:1px;");
+  updateBtn.addEventListener("click",function(){
+    var st=document.getElementById("status");
+    updateBtn.textContent="Fetching prices...";updateBtn.style.opacity="0.5";
+    st.textContent="Contacting Star Citizen Wiki API...";st.style.color="var(--blue)";
+    function onSuccess(count){
+      if(count>0){
+        priceUpdateMsg="\u2713 "+count+" store prices updated from Star Citizen Wiki";
+        render();
+      } else { onFail("No prices returned"); }
+    }
+    function onFail(reason){
+      updateBtn.style.opacity="1";
+      updateBtn.textContent="\u2717 Fetch failed";updateBtn.style.color="var(--red)";updateBtn.style.borderColor="rgba(255,82,82,0.3)";
+      st.textContent="\u26a0 Could not fetch prices ("+reason+"). Re-export from RSI and drop the CSV here \u2014 your chains are safe.";st.style.color="var(--yellow)";
+      document.getElementById("landing").style.display="";
+      setTimeout(function(){updateBtn.textContent="\u21bb UPDATE PRICES";updateBtn.style.color="var(--blue)";updateBtn.style.borderColor="rgba(79,195,247,0.15)";},5000);
+    }
+    console.log("[Fleet Planner] Update prices clicked");
+    try{
+      fetchWikiPrices().then(function(c){console.log("[Fleet Planner] Got result:",c);onSuccess(c);}).catch(function(e){console.log("[Fleet Planner] Promise rejected:",e);onFail(e.message||"unknown error");});
+    }catch(e){console.log("[Fleet Planner] Sync error:",e);onFail(e.message||"unknown error");}
+  });
+  actRow.appendChild(updateBtn);
+  var resetBtn=ct("span","\u21bb NEW IMPORT","padding:10px 24px;border:1px solid var(--border3);border-radius:6px;background:rgba(255,255,255,0.03);color:var(--text3);cursor:pointer;font-size:12px;letter-spacing:1px;");
+  resetBtn.addEventListener("click",function(){fleet=[];melts=new Set();credit=0;chains=[];document.getElementById("app").innerHTML="";document.getElementById("landing").style.display="";document.getElementById("status").textContent="";document.getElementById("fileinput").value="";});
+  actRow.appendChild(resetBtn);
+  var saveBtn=ct("span","SAVE PLAN","padding:10px 24px;border:1px solid rgba(200,149,100,0.3);border-radius:6px;background:rgba(200,149,100,0.06);color:var(--gold);cursor:pointer;font-size:12px;letter-spacing:1px;");
+  saveBtn.addEventListener("click",savePlan);actRow.appendChild(saveBtn);
+  var expBtn2=ct("span","EXPORT FOR ORG (no values)","padding:10px 24px;border:1px solid rgba(105,240,174,0.3);border-radius:6px;background:rgba(105,240,174,0.06);color:var(--green);cursor:pointer;font-size:12px;letter-spacing:1px;");
+  expBtn2.addEventListener("click",doExport);actRow.appendChild(expBtn2);
+  app.appendChild(actRow);
+
+  /* Price update banner */
+  if(priceUpdateMsg){
+    var puBanner=ce("div");puBanner.style.cssText="background:rgba(105,240,174,0.06);border:1px solid rgba(105,240,174,0.2);border-radius:8px;padding:14px 18px;margin-bottom:12px;text-align:center;";
+    puBanner.appendChild(ct("span",priceUpdateMsg,"font-size:14px;font-weight:600;color:var(--green);"));
+    var puClose=ct("span"," \u2715","color:var(--green);cursor:pointer;font-size:12px;margin-left:10px;opacity:0.5;");
+    puClose.addEventListener("click",function(){priceUpdateMsg="";render();});
+    puBanner.appendChild(puClose);
+    app.appendChild(puBanner);
+  }
+
+  /* Show available hangar CCUs as a reference */
+  var hCcus=fleet.filter(function(s){return s.type==="ccu";});
+  if(hCcus.length>0){
+    var hNote=ct("div","Your hangar CCUs are auto-detected when building chains below.","font-size:13px;color:var(--text2);margin-bottom:12px;padding:12px 16px;background:rgba(255,215,64,0.04);border:1px solid rgba(255,215,64,0.12);border-radius:6px;");
+    app.appendChild(hNote);
+  }
+  var ccuHd=ce("div","shd");ccuHd.appendChild(ct("span","CCU CHAINS"));ccuHd.appendChild(ct("span",chains.length+" chain"+(chains.length!==1?"s":""),"font-size:12px;color:var(--text3);font-weight:400;"));app.appendChild(ccuHd);
+  chains.forEach(function(chain,ci){
+    var chainCost=getChainCost(chain);var directCost=0;
+    if(chain.steps.length>0&&chain.sourcePrice>0){directCost=Math.max(0,chain.steps[chain.steps.length-1].price-chain.sourcePrice);}
+    var chainSaving=directCost-chainCost;
+    var cDiv=ce("div");cDiv.style.cssText="background:var(--bg4);border:1px solid rgba(79,195,247,0.1);border-radius:10px;padding:14px;margin-bottom:12px;";
+    /* Header */
+    var cHead=ce("div");cHead.style.cssText="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;";
+    cHead.appendChild(ct("span","CHAIN "+(ci+1),"font-size:11px;font-weight:700;color:var(--blue);letter-spacing:2px;"));
+    var cRight=ce("div");cRight.style.cssText="display:flex;align-items:center;gap:10px;";
+    cRight.appendChild(ct("span","Cost: $"+chainCost,"font-size:13px;font-weight:700;color:var(--yellow);"));
+    if(chainSaving>0)cRight.appendChild(ct("span","(save $"+chainSaving+" vs direct)","font-size:10px;color:var(--green);"));
+    var xBtn=ct("span","\u2715","color:var(--red);cursor:pointer;font-size:13px;");
+    (function(i){xBtn.addEventListener("click",function(){removeChain(i);});})(ci);cRight.appendChild(xBtn);cHead.appendChild(cRight);cDiv.appendChild(cHead);
+    /* Source */
+    var srcRow=ce("div");srcRow.style.cssText="display:flex;align-items:center;gap:8px;margin-bottom:6px;";
+    srcRow.appendChild(ct("span","FROM","font-size:9px;color:var(--green);background:rgba(105,240,174,0.1);border:1px solid rgba(105,240,174,0.15);padding:3px 10px;border-radius:3px;letter-spacing:1px;"));
+    srcRow.appendChild(makeShipSelect(chain.source,function(v){setChainSource(ci,v);},true));
+    srcRow.appendChild(ct("span",chain.sourcePrice?"$"+chain.sourcePrice:"","font-size:12px;color:var(--green);min-width:55px;text-align:right;"));
+    cDiv.appendChild(srcRow);
+    /* Steps */
+    chain.steps.forEach(function(step,si){
+      cDiv.appendChild(ct("div","\u2193","text-align:center;color:rgba(79,195,247,0.3);font-size:11px;padding:2px 0;"));
+      var stepRow=ce("div");stepRow.style.cssText="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:10px 12px;";
+      var topRow=ce("div");topRow.style.cssText="display:flex;align-items:center;gap:8px;flex-wrap:wrap;";
+      var labelText=step.owned?"OWNED":"STEP "+(si+1);var lColor=step.owned?"var(--green)":"var(--blue)";var lBg=step.owned?"rgba(105,240,174,0.1)":"rgba(79,195,247,0.1)";
+      topRow.appendChild(ct("span",labelText,"font-size:9px;color:"+lColor+";background:"+lBg+";border:1px solid "+lColor.replace(")",",0.2)").replace("rgb","rgba")+";padding:3px 10px;border-radius:3px;letter-spacing:1px;"));
+      topRow.appendChild(makeShipSelect(step.ship,function(v){setChainStep(ci,si,v);},false));
+      topRow.appendChild(ct("span","$","font-size:12px;color:var(--text5);"));
+      var pIn=document.createElement("input");pIn.type="number";pIn.value=step.price;pIn.style.width="80px";
+      (function(c,s){pIn.addEventListener("change",function(){setChainStepPrice(c,s,this.value);});})(ci,si);topRow.appendChild(pIn);
+      var prevPrice=si>0?chain.steps[si-1].price:chain.sourcePrice;var stepCost=step.owned?0:Math.max(0,step.price-prevPrice);
+      topRow.appendChild(ct("span",step.owned?"\u2713 owned":"cost: $"+stepCost,"font-size:11px;color:"+(step.owned?"var(--green)":"var(--yellow)")+";min-width:80px;text-align:right;"));
+      var ownBtn=document.createElement("span");
+      ownBtn.style.cssText="padding:4px 10px;font-size:9px;border-radius:4px;cursor:pointer;letter-spacing:1px;"+(step.owned?"background:rgba(105,240,174,0.15);color:var(--green);border:1px solid rgba(105,240,174,0.3);":"background:rgba(255,255,255,0.03);color:var(--text5);border:1px solid var(--border3);");
+      ownBtn.textContent=step.owned?"\u2713 OWNED":"OWNED?";
+      ownBtn.title="Click to toggle: do you already own this CCU?";
+      (function(c,s){ownBtn.addEventListener("click",function(){toggleChainStepOwned(c,s);});})(ci,si);
+      topRow.appendChild(ownBtn);
+      var mccu=findMatchingCcu(chain,si);
+      if(mccu&&!step.owned){
+        var sugBtn=document.createElement("span");
+        sugBtn.style.cssText="padding:4px 10px;font-size:9px;border-radius:4px;cursor:pointer;background:rgba(255,215,64,0.08);color:var(--yellow);border:1px solid rgba(255,215,64,0.15);margin-left:4px;";
+        sugBtn.textContent="Use: "+mccu.name;
+        (function(c,s){sugBtn.addEventListener("click",function(){chains[c].steps[s].owned=true;render();});})(ci,si);
+        topRow.appendChild(sugBtn);
+      }
+      var rmBtn=ct("span","\u2715","color:var(--red);cursor:pointer;font-size:12px;");
+      (function(c,s){rmBtn.addEventListener("click",function(){removeChainStep(c,s);});})(ci,si);topRow.appendChild(rmBtn);
+      stepRow.appendChild(topRow);cDiv.appendChild(stepRow);
+    });
+    /* Add step */
+    var addStepRow=ce("div");addStepRow.style.cssText="text-align:center;margin-top:8px;";
+    var addStepBtn=ct("span","+ Add Step","padding:6px 16px;font-size:10px;letter-spacing:1px;border:1px solid rgba(79,195,247,0.2);border-radius:4px;background:rgba(79,195,247,0.05);color:var(--blue);cursor:pointer;");
+    (function(i){addStepBtn.addEventListener("click",function(){addChainStep(i);});})(ci);addStepRow.appendChild(addStepBtn);cDiv.appendChild(addStepRow);
+    /* Summary */
+    if(chain.steps.length>0&&chain.steps[chain.steps.length-1].ship){
+      var sumRow=ce("div");sumRow.style.cssText="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;";
+      sumRow.appendChild(ct("span",chain.source+" \u2192 "+chain.steps[chain.steps.length-1].ship,"font-size:12px;color:var(--text3);"));
+      sumRow.appendChild(ct("span","$"+chainCost+(chainSaving>0?" (direct: $"+directCost+")":""),"font-size:12px;font-weight:600;color:var(--yellow);"));
+      cDiv.appendChild(sumRow);
+    }
+    app.appendChild(cDiv);
+  });
+  /* New chain button */
+  var newRow=ce("div");newRow.style.cssText="text-align:center;margin-top:8px;";var newBtn=ct("span","+ NEW CCU CHAIN","");newBtn.className="btn";newBtn.addEventListener("click",addChain);newRow.appendChild(newBtn);app.appendChild(newRow);
+
+  /* Status */
+  if(chains.length>0&&ccuT>0){var stBar=ce("div");stBar.style.cssText="background:"+(ok?"rgba(105,240,174,0.05)":"rgba(255,82,82,0.05)")+";border:1px solid "+(ok?"rgba(105,240,174,0.2)":"rgba(255,82,82,0.2)")+";border-radius:8px;padding:14px;text-align:center;margin-top:16px;";stBar.appendChild(ct("div",ok?"\u2713 ALL CHAINS AFFORDABLE \u2014 $"+rem+" to spare":"\u2717 $"+Math.abs(rem)+" SHORT","font-size:14px;font-weight:700;color:"+(ok?"var(--green)":"var(--red)")+";"));app.appendChild(stBar);}
+
+  /* Final fleet */
+  var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship";});
+  var targets=[];chains.forEach(function(c){if(c.steps.length>0){var last=c.steps[c.steps.length-1];if(last.ship)targets.push(last.ship);}});
+  if(kept.length+targets.length>0){
+    var fhd=ce("div","shd");fhd.appendChild(ct("span","FINAL FLEET ("+(kept.length+targets.length)+")"));app.appendChild(fhd);
+    kept.forEach(function(s){var card=ce("div","cd");card.style.borderLeft="3px solid var(--green)";card.appendChild(ct("span","KEPT","font-size:9px;color:var(--green);background:rgba(105,240,174,0.1);border:1px solid rgba(105,240,174,0.2);padding:3px 10px;border-radius:3px;letter-spacing:1px;"));card.appendChild(ct("span",s.name,"font-size:14px;font-weight:600;color:var(--text);"));app.appendChild(card);});
+    targets.forEach(function(t){var card=ce("div","cd");card.style.borderLeft="3px solid var(--blue)";card.appendChild(ct("span","NEW","font-size:9px;color:var(--blue);background:rgba(79,195,247,0.1);border:1px solid rgba(79,195,247,0.2);padding:3px 10px;border-radius:3px;letter-spacing:1px;"));card.appendChild(ct("span",t,"font-size:14px;font-weight:600;color:var(--text);"));app.appendChild(card);});
+    
+  }
+}
+
+</script>
+</body>
+</html>
