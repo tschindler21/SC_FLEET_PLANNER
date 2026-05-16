@@ -255,7 +255,7 @@ function toggleChainStepOwned(ci,si){chains[ci].steps[si].owned=!chains[ci].step
 function removeChainStep(ci,si){chains[ci].steps.splice(si,1);render();}
 function removeChain(ci){chains.splice(ci,1);render();}
 function getChainCost(chain){var total=0,prevPrice=chain.sourcePrice;chain.steps.forEach(function(step){if(!step.owned&&step.price>prevPrice){total+=step.price-prevPrice;}if(step.price>0)prevPrice=step.price;});return total;}
-function doExport(){var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship";});var targets=[];chains.forEach(function(c){if(c.steps.length>0){var last=c.steps[c.steps.length-1];if(last.ship)targets.push(last.ship);}});var mn=prompt("Enter your name for the org export:","");if(!mn)return;var csv="Member Name,Ship Name,Insurance\n";kept.forEach(function(s){csv+='"'+mn+'","'+s.name+'","'+s.ins+'"\n';});targets.forEach(function(t){csv+='"'+mn+'","'+t+'",""\n';});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=mn.replace(/ /g,"_")+".csv";a.click();}
+function doExport(){var cs={};chains.forEach(function(c){if(c.source&&c.steps.length>0)cs[c.source]=true;});var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship"&&!cs[s.name];});var targets=[];chains.forEach(function(c){if(c.steps.length>0){var last=c.steps[c.steps.length-1];if(last.ship)targets.push(last.ship);}});var mn=prompt("Enter your name for the org export:","");if(!mn)return;var csv="Member Name,Ship Name,Insurance\n";kept.forEach(function(s){csv+='"'+mn+'","'+s.name+'","'+s.ins+'"\n';});targets.forEach(function(t){csv+='"'+mn+'","'+t+'",""\n';});var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=mn.replace(/ /g,"_")+".csv";a.click();}
 
 function ce(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
 function ct(tag,text,css){var e=document.createElement(tag);e.textContent=text;if(css)e.style.cssText=css;return e;}
@@ -623,7 +623,10 @@ function render(){
   if(chains.length>0&&ccuT>0){var stBar=ce("div");stBar.style.cssText="background:"+(ok?"rgba(105,240,174,0.05)":"rgba(255,82,82,0.05)")+";border:1px solid "+(ok?"rgba(105,240,174,0.2)":"rgba(255,82,82,0.2)")+";border-radius:8px;padding:14px;text-align:center;margin-top:16px;";stBar.appendChild(ct("div",ok?"\u2713 ALL CHAINS AFFORDABLE \u2014 $"+rem+" to spare":"\u2717 $"+Math.abs(rem)+" SHORT","font-size:14px;font-weight:700;color:"+(ok?"var(--green)":"var(--red)")+";"));app.appendChild(stBar);}
 
   /* Final fleet */
-  var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship";});
+  /* Collect chain source ships - these are being upgraded away */
+  var chainSources={};
+  chains.forEach(function(c){if(c.source&&c.steps.length>0)chainSources[c.source]=true;});
+  var kept=fleet.filter(function(_,i){return!melts.has(i);}).filter(function(s){return s.type==="ship"&&!chainSources[s.name];});
   var targets=[];chains.forEach(function(c){if(c.steps.length>0){var last=c.steps[c.steps.length-1];if(last.ship)targets.push(last.ship);}});
   if(kept.length+targets.length>0){
     var fhd=ce("div","shd");fhd.appendChild(ct("span","FINAL FLEET ("+(kept.length+targets.length)+")"));app.appendChild(fhd);
