@@ -53,10 +53,24 @@
         }
       });
       var insurance = "";
+      var insuranceItems = [];
+      var bestMonths = 0;
       containedItems.forEach(function(ci) {
-        if (ci.kind === "Insurance" || ci.title.toLowerCase().indexOf("insurance") >= 0) insurance = ci.title;
+        if (ci.kind === "Insurance" || ci.title.toLowerCase().indexOf("insurance") >= 0) {
+          insuranceItems.push(ci.title);
+          var tl = ci.title.toLowerCase();
+          var months = 0;
+          if (tl.indexOf("lifetime") >= 0) months = 9999;
+          else {
+            var m = tl.match(/(\d+)\s*month/); if (m) months = parseInt(m[1]);
+            var y = tl.match(/(\d+)\s*year/); if (y) months = parseInt(y[1]) * 12;
+          }
+          if (months >= bestMonths) { bestMonths = months; insurance = ci.title; }
+        }
       });
+      if (insuranceItems.length > 0) console.log("[Export] " + pledgeName + " -> found " + insuranceItems.length + " insurance items: " + insuranceItems.join(" | ") + " -> using: " + insurance);
       items.push({ pledgeName: pledgeName, meltValue: meltValue, date: dateText, insurance: insurance, containedItems: containedItems });
+      console.log("[Export] Pledge: " + pledgeName + " | items: " + containedItems.map(function(c){return c.title+"("+c.kind+")";}).join(", "));
     });
     return items;
   }
